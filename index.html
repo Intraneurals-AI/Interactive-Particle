@@ -1,5 +1,40 @@
-<canvas id="canvas"></canvas>
-<style>
-  body, html { margin: 0; padding: 0; overflow: hidden; background: #050505; }
-  canvas { display: block; }
-</style>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Effects Playground</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- UI Controls -->
+    <nav class="controls">
+        <button onclick="switchMode('magnetic')">Magnetic Grid</button>
+        <button onclick="switchMode('liquid')">Liquid Glass</button>
+        <button onclick="switchMode('particles')">Particle Explosion</button>
+    </nav>
+
+    <main id="stage">
+        <!-- Magnetic Grid Container -->
+        <div id="grid-container" class="mode-layer"></div>
+
+        <!-- Liquid Glass Container -->
+        <div id="liquid-container" class="mode-layer hidden">
+            <div class="content base">
+                <img src="https://images.unsplash.com/photo-1614164185128-e4ec99c436d7?auto=format&fit=crop&q=80&w=1000" alt="Watch">
+                <h1>PRECISION</h1>
+            </div>
+            <div id="magnifier" class="content magnified">
+                <img src="https://images.unsplash.com/photo-1614164185128-e4ec99c436d7?auto=format&fit=crop&q=80&w=1000" alt="Watch">
+                <h1>PRECISION</h1>
+            </div>
+        </div>
+
+        <!-- Particles Container -->
+        <canvas id="particle-canvas" class="mode-layer hidden"></canvas>
+    </main>
+
+    <script src="script.js"></script>
+</body>
+</html>
