@@ -3,38 +3,127 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Interactive Effects Playground</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Particle Explosion</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #050505;
+        }
+
+        canvas {
+            display: block;
+        }
+    </style>
 </head>
 <body>
 
-    <!-- UI Controls -->
-    <nav class="controls">
-        <button onclick="switchMode('magnetic')">Magnetic Grid</button>
-        <button onclick="switchMode('liquid')">Liquid Glass</button>
-        <button onclick="switchMode('particles')">Particle Explosion</button>
-    </nav>
+    <canvas id="particleCanvas"></canvas>
 
-    <main id="stage">
-        <!-- Magnetic Grid Container -->
-        <div id="grid-container" class="mode-layer"></div>
+    <script>
+        const canvas = document.getElementById('particleCanvas');
+        const ctx = canvas.getContext('2d');
 
-        <!-- Liquid Glass Container -->
-        <div id="liquid-container" class="mode-layer hidden">
-            <div class="content base">
-                <img src="https://images.unsplash.com/photo-1614164185128-e4ec99c436d7?auto=format&fit=crop&q=80&w=1000" alt="Watch">
-                <h1>PRECISION</h1>
-            </div>
-            <div id="magnifier" class="content magnified">
-                <img src="https://images.unsplash.com/photo-1614164185128-e4ec99c436d7?auto=format&fit=crop&q=80&w=1000" alt="Watch">
-                <h1>PRECISION</h1>
-            </div>
-        </div>
+        let particles = [];
+        let mouse = { x: null, y: null, vX: 0, vY: 0, lastX: 0, lastY: 0 };
+        
+        // Settings
+        const particleCount = 800;
+        const repulsionRadius = 120;
+        const returnForce = 0.05;
+        const friction = 0.95;
 
-        <!-- Particles Container -->
-        <canvas id="particle-canvas" class="mode-layer hidden"></canvas>
-    </main>
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            init();
+        }
 
-    <script src="script.js"></script>
+        class Particle {
+            constructor() {
+                this.homeX = Math.random() * canvas.width;
+                this.homeY = Math.random() * canvas.height;
+                this.x = this.homeX;
+                this.y = this.homeY;
+                this.vX = 0;
+                this.vY = 0;
+                this.size = Math.random() * 2 + 1;
+            }
+
+            update(speed) {
+                let dx = mouse.x - this.x;
+                let dy = mouse.y - this.y;
+                let distance = Math.sqrt(dx * dx + dy * dy);
+
+                // Repulsion logic
+                if (distance < repulsionRadius) {
+                    let force = (repulsionRadius - distance) / repulsionRadius;
+                    let angle = Math.atan2(dy, dx);
+                    // Push away
+                    this.vX -= Math.cos(angle) * force * 15;
+                    this.vY -= Math.sin(angle) * force * 15;
+                }
+
+                // Return to home position
+                this.vX += (this.homeX - this.x) * returnForce;
+                this.vY += (this.homeY - this.y) * returnForce;
+
+                // Physics
+                this.vX *= friction;
+                this.vY *= friction;
+                this.x += this.vX;
+                this.y += this.vY;
+            }
+
+            draw(color) {
+                ctx.fillStyle = color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        function init() {
+            particles = [];
+            for (let i = 0; i < particleCount; i++) {
+                particles.push(new Particle());
+            }
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Calculate mouse speed for color change
+            mouse.vX = mouse.x - mouse.lastX;
+            mouse.vY = mouse.y - mouse.lastY;
+            let speed = Math.sqrt(mouse.vX ** 2 + mouse.vY ** 2);
+            
+            // Map speed to Hue: Blue (200) to Orange/Red (20)
+            let hue = Math.max(20, 200 - (speed * 12));
+            let color = `hsla(${hue}, 100%, 70%, 0.8)`;
+
+            particles.forEach(p => {
+                p.update(speed);
+                p.draw(color);
+            });
+
+            mouse.lastX = mouse.x;
+            mouse.lastY = mouse.y;
+            requestAnimationFrame(animate);
+        }
+
+        window.addEventListener('mousemove', (e) => {
+            mouse.x = e.clientX;
+            mouse.y = e.clientY;
+        });
+
+        window.addEventListener('resize', resize);
+
+        resize();
+        animate();
+    </script>
 </body>
 </html>
