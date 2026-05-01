@@ -1,5 +1,125 @@
-<canvas id="canvas"></canvas>
-<style>
-  body, html { margin: 0; padding: 0; overflow: hidden; background: #050505; }
-  canvas { display: block; }
-</style>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Particle Explosion</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #050505;
+        }
+        canvas { display: block; }
+    </style>
+</head>
+<body>
+
+    <canvas id="particleCanvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('particleCanvas');
+        const ctx = canvas.getContext('2d');
+
+        let particles = [];
+        let mouse = { x: null, y: null, vX: 0, vY: 0, lastX: 0, lastY: 0 };
+        
+        const particleCount = 800; // Total fireflies
+        const repulsionRadius = 120; // Sensitivity zone
+        const returnForce = 0.05; // Strength of the "rubber band"
+        const friction = 0.95; // Fluid resistance
+
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            init();
+        }
+
+        class Particle {
+            constructor() {
+                this.homeX = Math.random() * canvas.width;
+                this.homeY = Math.random() * canvas.height;
+                this.x = this.homeX;
+                this.y = this.homeY;
+                this.vX = 0;
+                this.vY = 0;
+                this.size = Math.random() * 2 + 1;
+            }
+
+            update() {
+                let dx = mouse.x - this.x;
+                let dy = mouse.y - this.y;
+                let distance = Math.sqrt(dx * dx + dy * dy);
+
+                // 1. Repulsion Logic
+                if (distance < repulsionRadius) {
+                    let force = (repulsionRadius - distance) / repulsionRadius;
+                    let angle = Math.atan2(dy, dx);
+                    this.vX -= Math.cos(angle) * force * 15;
+                    this.vY -= Math.sin(angle) * force * 15;
+                }
+
+                // 2. Returning Force
+                this.vX += (this.homeX - this.x) * returnForce;
+                this.vY += (this.homeY - this.y) * returnForce;
+
+                // 3. Physics & Friction
+                this.vX *= friction;
+                this.vY *= friction;
+                this.x += this.vX;
+                this.y += this.vY;
+            }
+
+            draw(color) {
+                ctx.fillStyle = color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        function init() {
+            particles = [];
+            for (let i = 0; i < particleCount; i++) {
+                particles.push(new Particle());
+            }
+        }
+
+        function animate() {
+            // Slight clear to leave motion trails
+            ctx.fillStyle = 'rgba(5, 5, 5, 0.2)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Calculate mouse speed for the "Twist"
+            mouse.vX = mouse.x - mouse.lastX;
+            mouse.vY = mouse.y - mouse.lastY;
+            let speed = Math.sqrt(mouse.vX ** 2 + mouse.vY ** 2);
+            
+            // Map speed to Hue: Blue (200) to Red/Orange (20)
+            let hue = Math.max(20, 200 - (speed * 12));
+            let color = `hsla(${hue}, 100%, 70%, 0.8)`;
+
+            particles.forEach(p => {
+                p.update();
+                p.draw(color);
+            });
+
+            mouse.lastX = mouse.x;
+            mouse.lastY = mouse.y;
+            requestAnimationFrame(animate);
+        }
+
+        window.addEventListener('mousemove', (e) => {
+            mouse.x = e.clientX;
+            mouse.y = e.clientY;
+        });
+
+        window.addEventListener('resize', resize);
+        resize();
+        animate();
+    </script>
+</body>
+</html>
